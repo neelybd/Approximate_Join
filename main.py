@@ -2,10 +2,12 @@ import pandas as pd
 from tkinter import Tk
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 
+
 def main():
+    global direction
     print("Program: Approximate Join")
-    print("Release: 0.0.2")
-    print("Date: 2019-09-02")
+    print("Release: 0.1.0")
+    print("Date: 2019-09-03")
     print("Author: Brian Neely")
     print()
     print()
@@ -44,7 +46,7 @@ def main():
     table_2_join_key_1 = column_selection(data_2, "Select Table 2 Join Key 1 - Used for fuzzy date match")
 
     # Select Primary Table
-    if y_n_question("Choose Table 1 [" + file_in_1 + "] as Primary Table (Yes/No): ") == True:
+    if y_n_question("Choose Table 1 [" + file_in_1 + "] as Primary Table (Yes/No): "):
         primary = data_1
         primary_key = table_1_join_key_1
         secondary = data_2
@@ -56,7 +58,7 @@ def main():
         secondary_key = table_1_join_key_1
 
     # Ask for secondary join keys
-    if y_n_question("Second Join Key (Yes/No): ") == True:
+    if y_n_question("Second Join Key (Yes/No): "):
         # Select Table 1's join key 1
         primary_key_2 = column_selection(data_1, "Select Primary Table Second Join Key")
 
@@ -74,7 +76,7 @@ def main():
     inner = y_n_question("Include inner results (Yes/No): ")
 
     # Convert table keys to numeric
-    if y_n_question("Is Table Key 1 a Datetime (Yes/No): ") == True:
+    if y_n_question("Is Table Key 1 a Datetime (Yes/No): "):
         primary[primary_key] = convert_to_datetime(primary[primary_key])
         secondary[secondary_key] = convert_to_datetime(secondary[secondary_key])
     else:
@@ -94,7 +96,7 @@ def main():
     # *****Need to roll this into a function and put a manual check with it to ensure that the data is the right format.
 
     # Rename Secondary Key to Primary Key for join
-    secondary.rename(columns={secondary_key:primary_key}, inplace=True)
+    secondary.rename(columns={secondary_key: primary_key}, inplace=True)
 
     # Select round type, Nearest, Round-down, Round-up, Nearest
     fuzzy_join_type = indexed_question("Select Join Type", ["Nearest", "Nearest where Primary > Secondary",
@@ -107,15 +109,7 @@ def main():
         direction = "backward"
 
     # Separate data files based on Second Join Key
-    if second_join_key == True:
-        # Split dataframes by the second join keys.
-        # 1. Pull the secondary joins keys
-        # 2. Union keys from both tables
-        # 3. Dedup list
-        # 3. Sort Keys
-        # 4. Make a list of dataframes split based on the join keys
-        # 5. Perform the join on a per split dataframe.
-        # 6. Union split dataframes
+    if second_join_key:
 
         # Pull the secondary join keys and dedup
         primary_key_2_list = primary[primary_key_2].drop_duplicates()
@@ -141,7 +135,7 @@ def main():
         merged_df_array = {}
         for index, i in enumerate(primary_df_array):
             merged_df_array[index] = pd.merge_asof(primary_df_array[index], secondary_df_array[index], on=primary_key,
-                                               direction=direction, allow_exact_matches=inner)
+                                                   direction=direction, allow_exact_matches=inner)
 
         # Union split dataframes
         data_out = pd.concat(merged_df_array, ignore_index=True, sort=False).reset_index(drop=True)
@@ -157,7 +151,7 @@ def main():
 def convert_to_datetime(data):
     # Try to autodetect datetime format
     try:
-        data_converted = pd.to_datetime(data, infer_datetime_format=True)
+        date_converted = pd.to_datetime(data, infer_datetime_format=True)
     except:
         print("Date time format could not be automatically be determined.")
         while True:
@@ -169,8 +163,7 @@ def convert_to_datetime(data):
                 continue
             else:
                 break
-    return data_converted
-
+    return date_converted
 
 
 def column_selection(data, title):
@@ -183,8 +176,8 @@ def column_selection(data, title):
                 print(str(j) + ": to select column [" + str(i) + "]")
             column = headers[int(input("Enter Selection: "))]
         except ValueError:
-                print("Input must be integer between 0 and " + str(len(headers)))
-                continue
+            print("Input must be integer between 0 and " + str(len(headers)))
+            continue
         else:
             break
     return column
@@ -282,8 +275,8 @@ def indexed_question(question, answer_list):
                 print(str(j) + ": to select [" + str(i) + "]")
             column = answer_list[int(input("Enter Selection: "))]
         except IndexError:
-                print("Input must be integer between 0 and " + str(len(answer_list)-1))
-                continue
+            print("Input must be integer between 0 and " + str(len(answer_list) - 1))
+            continue
         else:
             break
     return column
