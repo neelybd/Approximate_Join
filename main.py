@@ -4,10 +4,9 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 
 def main():
-    global direction
     print("Program: Approximate Join")
-    print("Release: 0.1.0")
-    print("Date: 2019-09-03")
+    print("Release: 0.1.1")
+    print("Date: 2019-09-16")
     print("Author: Brian Neely")
     print()
     print()
@@ -77,8 +76,11 @@ def main():
 
     # Convert table keys to numeric
     if y_n_question("Is Table Key 1 a Datetime (Yes/No): "):
-        primary[primary_key] = convert_to_datetime(primary[primary_key])
-        secondary[secondary_key] = convert_to_datetime(secondary[secondary_key])
+        primary[primary_key] = convert_to_datetime(primary[primary_key], "Primary")
+        secondary[secondary_key] = convert_to_datetime(secondary[secondary_key], "Secondary")
+        # Filter out coerced data points
+        primary = primary[primary[primary_key].notnull()]
+        secondary = secondary[secondary[secondary_key].notnull()]
     else:
         print("Non-numeric values will be set to NaN and exported as a separate file.")
         primary[primary_key] = pd.to_numeric(primary[primary_key], errors='coerce')
@@ -92,11 +94,35 @@ def main():
     print("Printing Head of Secondary Table Key")
     print(secondary[secondary_key].head())
     print("")
-
     # *****Need to roll this into a function and put a manual check with it to ensure that the data is the right format.
 
     # Rename Secondary Key to Primary Key for join
     secondary.rename(columns={secondary_key: primary_key}, inplace=True)
+
+    # Append name to Secondary dataset
+    if y_n_question("Append name to secondary dataset (y/n): "):
+        # Get append name
+        column_append = input("Append string to encoded column name: ")
+
+        # Loop through list of column names
+        for i in list(secondary):
+            # If secondary key is used
+            if second_join_key:
+                # If column name is either key
+                if i != primary_key and i != secondary_key_2:
+                    # Rename Column
+                    secondary.rename(columns={i: i + column_append}, inplace=True)
+                    print("Column {" + i + "} renamed to {" + i + column_append + "}")
+                else:
+                    print("Column {" + i + "} used as key")
+            else:
+                # If column name is key
+                if i != primary_key:
+                    # Rename Column
+                    secondary.rename(columns={i: i + column_append}, inplace=True)
+                    print("Column {" + i + "} renamed to {" + i + column_append + "}")
+                else:
+                    print("Column {" + i + "} used as key")
 
     # Select round type, Nearest, Round-down, Round-up, Nearest
     fuzzy_join_type = indexed_question("Select Join Type", ["Nearest", "Nearest where Primary > Secondary",
@@ -107,6 +133,10 @@ def main():
         direction = "forward"
     if fuzzy_join_type == "Nearest where Primary < Secondary":
         direction = "backward"
+
+    # Dedup Secondary Table
+    print("Dropping duplicate fields in Secondary Table.")
+    secondary.drop_duplicates(inplace=True)
 
     # Separate data files based on Second Join Key
     if second_join_key:
@@ -130,34 +160,74 @@ def main():
             primary_df_array[index] = primary[primary[primary_key_2] == i]
             secondary_df_array[index] = secondary[secondary[secondary_key_2] == i]
 
+        # Sort dataframes
+        print("Sorting Primary dataset.")
+        for index, i in enumerate(primary_df_array):
+            try:
+                primary_df_array[index].sort_values(by=primary_key, inplace=True)
+            except:
+                continue
+        print("Sorting Secondary dataset.")
+        for index, i in enumerate(secondary_df_array):
+            try:
+                secondary_df_array[index].sort_values(by=secondary_key, inplace=True)
+            except:
+                continue
+
         # Merge Datasets
         # Create empty merged dataframe array
         merged_df_array = {}
         for index, i in enumerate(primary_df_array):
+            # Merge data
+            print("Merging: " + str(index + 1) + ":" + str(len(primary_df_array)))
+            print("")
             merged_df_array[index] = pd.merge_asof(primary_df_array[index], secondary_df_array[index], on=primary_key,
                                                    direction=direction, allow_exact_matches=inner)
 
         # Union split dataframes
+        print("Unioning split datasets")
         data_out = pd.concat(merged_df_array, ignore_index=True, sort=False).reset_index(drop=True)
+        print("Datasets unioned!")
+        print("")
+
+        # Append Column Append name to secondary keys
+        if column_append != None:
+            data_out.rename({secondary_key: secondary_key + column_append, secondary_key_2: secondary_key_2 + column_append}, inplace=True)
 
     else:
+        # Sort Datasets
+        print("Sorting Primary dataset.")
+        primary.sort(primary_key, inplace=True)
+        print("Sorting Secondary dataset.")
+        secondary.sort(secondary_key, inplace=True)
+
         # Merge Datasets
         data_out = pd.merge_asof(primary, secondary, on=primary_key, direction=direction, allow_exact_matches=inner)
 
+        # Append Column Append name to secondary key
+        if column_append != None:
+            data_out.rename({secondary_key: secondary_key + column_append}, inplace=True)
+
     # Export File
+    print("Writing output to {" + file_out + "}")
     data_out.to_csv(file_out, index=False)
 
 
-def convert_to_datetime(data):
+def convert_to_datetime(data, table):
     # Try to autodetect datetime format
     try:
         date_converted = pd.to_datetime(data, infer_datetime_format=True)
     except:
-        print("Date time format could not be automatically be determined.")
+        print("Date time format could not be automatically be determined for the " + table + ".")
         while True:
             try:
-                date_format = input("Input Date Format. Example = %Y%m%d")
-                date_converted = pd.to_datetime(data, format=date_format)
+                date_format = input("Input Date Format (%Y%m%d %H:%M): ")
+                # Add in error handling to filter out data that doesn't match formatting
+                if y_n_question("Filter out non-matching dates (Yes/No): "):
+                    error = "coerce"
+                else:
+                    error = "raise"
+                date_converted = pd.to_datetime(data, format=date_format, errors=error)
             except:
                 print("Input Date Format invalid. Please try again.")
                 continue
