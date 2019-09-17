@@ -5,8 +5,8 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 def main():
     print("Program: Approximate Join")
-    print("Release: 0.1.1")
-    print("Date: 2019-09-16")
+    print("Release: 0.1.2")
+    print("Date: 2019-09-17")
     print("Author: Brian Neely")
     print()
     print()
@@ -219,6 +219,7 @@ def convert_to_datetime(data, table):
         date_converted = pd.to_datetime(data, infer_datetime_format=True)
     except:
         print("Date time format could not be automatically be determined for the " + table + ".")
+        print(data.head())
         while True:
             try:
                 date_format = input("Input Date Format (%Y%m%d %H:%M): ")
