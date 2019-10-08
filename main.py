@@ -10,7 +10,7 @@ def main():
     print("Author: Brian Neely")
     print()
     print()
-    print("This program reads two csv file and joins them based on a key and a nearest match.")
+    print("This program reads two csv files and joins them based on a key and a nearest match.")
     print()
     print()
 
