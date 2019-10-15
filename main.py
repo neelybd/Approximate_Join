@@ -5,8 +5,8 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 def main():
     print("Program: Approximate Join")
-    print("Release: 0.1.2")
-    print("Date: 2019-09-17")
+    print("Release: 0.1.3")
+    print("Date: 2019-10-14")
     print("Author: Brian Neely")
     print()
     print()
@@ -76,11 +76,17 @@ def main():
 
     # Convert table keys to numeric
     if y_n_question("Is Table Key 1 a Datetime (Yes/No): "):
+        print("Converting Table 1 to DateTime...")
         primary[primary_key] = convert_to_datetime(primary[primary_key], "Primary")
+        print("Table 1 converted to DateTime!")
+        print("Converting Table 2 to DateTime...")
         secondary[secondary_key] = convert_to_datetime(secondary[secondary_key], "Secondary")
+        print("Table 2 converted to DateTime!")
         # Filter out coerced data points
+        print("Filtering out Coerced data points...")
         primary = primary[primary[primary_key].notnull()]
         secondary = secondary[secondary[secondary_key].notnull()]
+        print("Coerced data points filtered!")
     else:
         print("Non-numeric values will be set to NaN and exported as a separate file.")
         primary[primary_key] = pd.to_numeric(primary[primary_key], errors='coerce')
@@ -123,6 +129,9 @@ def main():
                     print("Column {" + i + "} renamed to {" + i + column_append + "}")
                 else:
                     print("Column {" + i + "} used as key")
+    else:
+        # Set Column append name to none
+        column_append = None
 
     # Select round type, Nearest, Round-down, Round-up, Nearest
     fuzzy_join_type = indexed_question("Select Join Type", ["Nearest", "Nearest where Primary > Secondary",
@@ -142,13 +151,16 @@ def main():
     if second_join_key:
 
         # Pull the secondary join keys and dedup
+        print("Creating Secondary Key list...")
         primary_key_2_list = primary[primary_key_2].drop_duplicates()
         secondary_key_2_list = secondary[secondary_key_2].drop_duplicates()
 
         # Union keys from both tables and dedup
+        print("Unioning Key list and Deduping...")
         key_2_list = primary_key_2_list.append(secondary_key_2_list).drop_duplicates()
 
         # Sort Keys
+        print("Sorting Keys...")
         key_2_list.sort_values(inplace=True)
 
         # Split dataframes based on second key
