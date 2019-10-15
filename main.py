@@ -5,8 +5,8 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 def main():
     print("Program: Approximate Join")
-    print("Release: 0.1.3")
-    print("Date: 2019-10-14")
+    print("Release: 0.1.4")
+    print("Date: 2019-10-15")
     print("Author: Brian Neely")
     print()
     print()
