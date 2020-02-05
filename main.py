@@ -5,8 +5,8 @@ from tkinter.filedialog import asksaveasfilename, askopenfilename
 
 def main():
     print("Program: Approximate Join")
-    print("Release: 0.1.4")
-    print("Date: 2019-10-15")
+    print("Release: 0.1.5")
+    print("Date: 2020-02-05")
     print("Author: Brian Neely")
     print()
     print()
@@ -168,7 +168,7 @@ def main():
         primary_df_array = {}
         secondary_df_array = {}
         for index, i in enumerate(key_2_list):
-            print(str(i) + " " + str(index))
+            # print(str(i) + " " + str(index))
             primary_df_array[index] = primary[primary[primary_key_2] == i]
             secondary_df_array[index] = secondary[secondary[secondary_key_2] == i]
 
@@ -182,7 +182,7 @@ def main():
         print("Sorting Secondary dataset.")
         for index, i in enumerate(secondary_df_array):
             try:
-                secondary_df_array[index].sort_values(by=secondary_key, inplace=True)
+                secondary_df_array[index].sort_values(by=primary_key, inplace=True)
             except:
                 continue
 
@@ -211,7 +211,7 @@ def main():
         print("Sorting Primary dataset.")
         primary.sort(primary_key, inplace=True)
         print("Sorting Secondary dataset.")
-        secondary.sort(secondary_key, inplace=True)
+        secondary.sort(primary_key, inplace=True)
 
         # Merge Datasets
         data_out = pd.merge_asof(primary, secondary, on=primary_key, direction=direction, allow_exact_matches=inner)
